@@ -495,7 +495,7 @@ class EditorApp {
 
     try {
       const heroBg = localStorage.getItem("kucsc_hero_bg") || "";
-      await fetch(endpoint.trim(), {
+      const resp = await fetch(endpoint.trim(), {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({
@@ -504,7 +504,12 @@ class EditorApp {
           heroBg: heroBg
         })
       });
-      console.log("KU CSC Hub: Settings synced to Google Apps Script cloud storage");
+      const json = await resp.json();
+      if (json && (json.status === "ok" || json.status === "success")) {
+        console.log("KU CSC Hub: Settings synced to Google Apps Script cloud storage");
+      } else {
+        console.warn("GAS saveSettings returned error:", json);
+      }
     } catch (err) {
       console.warn("Could not save settings to Google Apps Script:", err);
     }
@@ -873,8 +878,12 @@ class EditorApp {
         try {
           const resp = await fetch(url);
           const json = await resp.json();
-          if (json.status === "ok") {
-            this.showGdriveStatusBox(`✅ เชื่อมต่อสำเร็จ! เวอร์ชัน: ${json.version || "N/A"}`, "success");
+          if (json.status === "ok" || json.status === "success") {
+            if (json.version === "3.0") {
+              this.showGdriveStatusBox(`✅ เชื่อมต่อสำเร็จ! Google Apps Script v3.0 พร้อมใช้งานและซิงค์ข้ามอุปกรณ์ได้ทันที`, "success");
+            } else {
+              this.showGdriveStatusBox(`⚠️ เชื่อมต่อได้ แต่ Apps Script บน Google ยังเป็นเวอร์ชัน ${json.version || "เก่า"} (กรุณาอัปเดตโค้ดใน Apps Script เป็น v3.0 และกด Deploy > New deployment เพื่อให้ซิงค์ข้ามอุปกรณ์และข้าม Google Account ได้)`, "warn");
+            }
           } else {
             this.showGdriveStatusBox(`⚠️ ตอบกลับได้ แต่สถานะไม่ถูกต้อง: ${JSON.stringify(json)}`, "warn");
           }
@@ -1158,8 +1167,8 @@ class EditorApp {
     this.formDeptSubtitle.value = item.subtitle || "";
     this.formDeptCategory.value = item.category;
     this.formDeptUrl.value = item.url;
-    this.formDeptBannerUrl.value = item.bannerUrl || "";
-    this.formDeptLogoUrl.value = item.logoUrl || "";
+    this.formBannerUrl.value = item.bannerUrl || "";
+    this.formLogoUrl.value = item.logoUrl || "";
     this.formDeptDesc.value = item.desc || "";
 
     this.updateBannerPreview(item.bannerUrl || "");
@@ -1175,8 +1184,8 @@ class EditorApp {
     this.formDeptSubtitle.value = "";
     this.formDeptCategory.value = "faculty";
     this.formDeptUrl.value = "";
-    this.formDeptBannerUrl.value = "";
-    this.formDeptLogoUrl.value = "";
+    this.formBannerUrl.value = "";
+    this.formLogoUrl.value = "";
     this.formDeptDesc.value = "";
 
     this.updateBannerPreview("");
