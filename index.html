@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KU CSC Links Portal | ศูนย์รวมช่องทางติดต่อ มก.ฉกส.</title>
+  <meta name="description" content="ศูนย์รวมช่องทางติดต่อ ลิงก์เพจ คณะ หน่วยงาน องค์กร และสโมสรนิสิต มหาวิทยาลัยเกษตรศาสตร์ วิทยาเขตเฉลิมพระเกียรติ จังหวัดสกลนคร">
+  
+  <!-- Google Fonts: Prompt & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ── Admin FAB Button (Bottom-Right) ───────────────────── */
+    #adminFab {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 999;
+      background: rgba(30, 30, 35, 0.55);
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: rgba(255,255,255,0.35);
+      padding: 8px 14px;
+      border-radius: 50px;
+      font-size: 0.72rem;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.25s ease;
+      letter-spacing: 0.04em;
+    }
+    #adminFab:hover {
+      background: rgba(16, 185, 129, 0.18);
+      border-color: rgba(16, 185, 129, 0.45);
+      color: #10b981;
+      box-shadow: 0 0 18px rgba(16, 185, 129, 0.2);
+    }
+    #adminFab i { font-size: 0.7rem; }
+
+    /* ── Admin Password Modal ───────────────────────────────── */
+    #adminPasswordModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      align-items: center;
+      justify-content: center;
+    }
+    #adminPasswordModal.active { display: flex; }
+    #adminPasswordCard {
+      background: var(--surface-card, #1a1f2e);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 18px;
+      padding: 2rem 2.25rem;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(16,185,129,0.08);
+      animation: fadeInUp 0.25s ease;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    #adminPasswordCard h3 {
+      margin: 0 0 0.35rem 0;
+      font-size: 1.15rem;
+      color: var(--text-main, #f1f5f9);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #adminPasswordCard h3 i { color: #10b981; }
+    #adminPasswordCard p {
+      margin: 0 0 1.25rem 0;
+      font-size: 0.8rem;
+      color: var(--text-muted, #94a3b8);
+    }
+    #adminPwInput {
+      width: 100%;
+      padding: 0.65rem 1rem;
+      border-radius: 10px;
+      border: 1px solid rgba(16,185,129,0.3);
+      background: rgba(255,255,255,0.05);
+      color: var(--text-main, #f1f5f9);
+      font-family: inherit;
+      font-size: 0.92rem;
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+      margin-bottom: 0.75rem;
+    }
+    #adminPwInput:focus { border-color: #10b981; }
+    #adminPwInput.error { border-color: #ef4444; animation: shake 0.35s ease; }
+    @keyframes shake {
+      0%,100%{ transform:translateX(0); }
+      25%{ transform:translateX(-6px); }
+      75%{ transform:translateX(6px); }
+    }
+    #adminPwError {
+      font-size: 0.76rem;
+      color: #ef4444;
+      margin-bottom: 0.85rem;
+      display: none;
+      align-items: center;
+      gap: 5px;
+    }
+    #adminPwError.show { display: flex; }
+    .admin-modal-btns {
+      display: flex;
+      gap: 0.6rem;
+      justify-content: flex-end;
+    }
+    .admin-modal-btns button {
+      padding: 0.55rem 1.25rem;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    #adminCancelBtn {
+      background: rgba(255,255,255,0.06);
+      color: var(--text-muted, #94a3b8);
+    }
+    #adminCancelBtn:hover { background: rgba(255,255,255,0.12); }
+    #adminConfirmBtn {
+      background: linear-gradient(135deg, #10b981, #047857);
+      color: #fff;
+    }
+    #adminConfirmBtn:hover { opacity: 0.88; transform: translateY(-1px); }
+  </style>
+</head>
+<body>
+  <!-- Ambient Glow Background Effects -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <!-- Header & Navigation -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <div class="brand-logo-wrap">
+          <i class="fa-solid fa-leaf brand-icon"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">KU CSC <span>PORTAL</span></span>
+          <span class="brand-subtitle">ม.เกษตรศาสตร์ วิทยาเขตเฉลิมพระเกียรติ จ.สกลนคร</span>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <button id="themeToggleBtn" class="btn-icon" aria-label="สลับโหมดมืด/สว่าง" title="สลับโหมดมืด/สว่าง">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section (แลนด์มาร์คซุ้มประตู มก.ฉกส.) -->
+  <section class="hero-section" id="heroSection" style="background-image: url('./assets/hero_landmark_bg.jpg');">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="pulse-dot"></span>
+        <span id="heroBadgeText">ช่องทางติดต่อทางการ & สโมสรนิสิต</span>
+      </div>
+      <h1 class="hero-title" id="heroBadgeTitle">
+        ศูนย์รวมช่องทางติดต่อ <br>
+        <span class="gradient-text">มหาวิทยาลัยเกษตรศาสตร์ วิทยาเขตเฉลิมพระเกียรติ จ.สกลนคร</span>
+      </h1>
+      <p class="hero-desc" id="heroDesc">
+        ค้นหาลิงก์ Facebook Pages, เว็บไซต์ และช่องทางติดต่อของทุกคณะ สโมสรนิสิต และหน่วยงานสนับสนุนการศึกษาในที่เดียว สะดวก รวดเร็ว สวยงาม
+      </p>
+
+      <!-- Stats Bar -->
+      <div class="stats-row">
+        <div class="stat-item">
+          <span class="stat-number" id="totalCount">0</span>
+          <span class="stat-label">หน่วยงานทั้งหมด</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-number" id="facultyCount">0</span>
+          <span class="stat-label">คณะวิชา</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-number" id="unitCount">0</span>
+          <span class="stat-label">หน่วยงานบริการ</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-number" id="clubCount">0</span>
+          <span class="stat-label">องค์กร/สโมสรนิสิต</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Controls & Search Section -->
+  <section class="controls-section">
+    <div class="controls-container">
+      <!-- Search Input -->
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="ค้นหาชื่อคณะ, สโมสร, งานทะเบียน, กิจการนิสิต, หรือคีย์เวิร์ด..."
+          autocomplete="off"
+        >
+        <button id="clearSearchBtn" class="clear-search-btn" title="ล้างการค้นหา">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Filter Pills -->
+      <div class="filter-pills" id="categoryFilters">
+        <button class="filter-pill active" data-category="all">
+          <i class="fa-solid fa-layer-group"></i> ทั้งหมด
+        </button>
+        <button class="filter-pill" data-category="faculty">
+          <i class="fa-solid fa-graduation-cap"></i> คณะวิชา
+        </button>
+        <button class="filter-pill" data-category="service">
+          <i class="fa-solid fa-briefcase"></i> หน่วยงานบริการ & สนับสนุน
+        </button>
+        <button class="filter-pill" data-category="student-gov">
+          <i class="fa-solid fa-users-gear"></i> องค์กรนิสิต
+        </button>
+        <button class="filter-pill" data-category="student-club">
+          <i class="fa-solid fa-flag"></i> สโมสรนิสิตคณะ
+        </button>
+      </div>
+
+      <!-- View & Quick Info Bar -->
+      <div class="view-options">
+        <div class="results-count">
+          พบ <span id="filteredCount">0</span> รายการ
+        </div>
+        <div class="view-toggle-btns">
+          <button id="gridViewBtn" class="view-btn active" title="มุมมองการ์ด">
+            <i class="fa-solid fa-table-cells-large"></i>
+          </button>
+          <button id="listViewBtn" class="view-btn" title="มุมมองรายการ">
+            <i class="fa-solid fa-list"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Directory Section -->
+  <main class="main-content">
+    <div class="directory-container">
+      <!-- Cards Grid -->
+      <div class="cards-grid" id="directoryGrid">
+        <!-- Dynamically rendered via JS -->
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" id="emptyState" style="display: none;">
+        <div class="empty-icon">
+          <i class="fa-solid fa-filter-circle-xmark"></i>
+        </div>
+        <h3>ไม่พบหน่วยงานที่คุณค้นหา</h3>
+        <p>ลองเปลี่ยนคำค้นหา หรือกดล้างการค้นหาเพื่อดูข้อมูลทั้งหมด</p>
+        <button class="btn-secondary" id="resetSearchBtn">ล้างการค้นหา</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="footer-logo">
+            <i class="fa-solid fa-leaf"></i>
+          </div>
+          <div>
+            <h4>KU CSC HUB • มหาวิทยาลัยเกษตรศาสตร์</h4>
+            <p>วิทยาเขตเฉลิมพระเกียรติ จังหวัดสกลนคร 47000</p>
+          </div>
+        </div>
+        <div class="footer-campus-link">
+          <a href="https://www.facebook.com/Kasetsart.Sakonnakhon" target="_blank" rel="noopener noreferrer" class="btn-outline">
+            <i class="fa-brands fa-facebook"></i> เพจหลักวิทยาเขตสกลนคร
+          </a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 KU CSC Link Directory. Designed with modern aesthetics & care for Kasetsart University students & staff.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modal: QR Code Share -->
+  <div class="modal-backdrop" id="qrModalBackdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="qrModalTitle"><i class="fa-solid fa-qrcode"></i> สแกน QR Code</h3>
+        <button class="modal-close-btn" id="closeQrModalBtn"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body qr-modal-body">
+        <div class="qr-preview-box" id="qrcodeContainer"></div>
+        <p class="qr-target-title" id="qrTargetName">ชื่อหน่วยงาน</p>
+        <p class="qr-target-url" id="qrTargetUrl">https://facebook.com/...</p>
+        <div class="qr-actions">
+          <button class="btn-secondary" id="copyUrlFromModalBtn">
+            <i class="fa-solid fa-copy"></i> คัดลอกลิงก์
+          </button>
+          <a id="openUrlFromModalBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn-primary">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> เปิดเพจทันที
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Toast Notification -->
+  <div class="toast-notification" id="toast">
+    <i class="fa-solid fa-circle-check toast-icon"></i>
+    <span id="toastMsg">คัดลอกลิงก์เรียบร้อยแล้ว</span>
+  </div>
+
+  <!-- Admin Floating Button (Bottom-Right) -->
+  <button id="adminFab" title="Admin Login">
+    <i class="fa-solid fa-lock"></i>
+    Admin
+  </button>
+
+  <!-- Admin Password Modal -->
+  <div id="adminPasswordModal">
+    <div id="adminPasswordCard">
+      <h3><i class="fa-solid fa-shield-halved"></i> Admin Access</h3>
+      <p>กรุณากรอกรหัสผ่านเพื่อเข้าสู่หน้าจัดการข้อมูล</p>
+      <input type="password" id="adminPwInput" placeholder="กรอกรหัสผ่าน..." autocomplete="current-password">
+      <div id="adminPwError"><i class="fa-solid fa-circle-exclamation"></i> รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่</div>
+      <div class="admin-modal-btns">
+        <button id="adminCancelBtn">ยกเลิก</button>
+        <button id="adminConfirmBtn"><i class="fa-solid fa-right-to-bracket"></i> เข้าสู่ระบบ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QRCode.js Library from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Global Config -->
+  <script src="config.js"></script>
+  <!-- Application Logic -->
+  <script src="app.js"></script>
+
+  <!-- Admin Password Gate Logic -->
+  <script>
+    (function() {
+      const ADMIN_PASSWORD = "kusabcsc1996";
+      const fab   = document.getElementById("adminFab");
+      const modal = document.getElementById("adminPasswordModal");
+      const input = document.getElementById("adminPwInput");
+      const errEl = document.getElementById("adminPwError");
+      const confirmBtn = document.getElementById("adminConfirmBtn");
+      const cancelBtn  = document.getElementById("adminCancelBtn");
+
+      function openModal() {
+        input.value = "";
+        input.classList.remove("error");
+        errEl.classList.remove("show");
+        modal.classList.add("active");
+        setTimeout(() => input.focus(), 80);
+      }
+
+      function closeModal() {
+        modal.classList.remove("active");
+      }
+
+      function tryLogin() {
+        if (input.value === ADMIN_PASSWORD) {
+          closeModal();
+          window.location.href = "editor.html";
+        } else {
+          input.classList.add("error");
+          errEl.classList.add("show");
+          input.value = "";
+          setTimeout(() => input.classList.remove("error"), 400);
+          input.focus();
+        }
+      }
+
+      fab.addEventListener("click", openModal);
+      cancelBtn.addEventListener("click", closeModal);
+      confirmBtn.addEventListener("click", tryLogin);
+
+      // Enter key to confirm
+      input.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") tryLogin();
+        if (e.key === "Escape") closeModal();
+      });
+
+      // Click outside card to close
+      modal.addEventListener("click", function(e) {
+        if (e.target === modal) closeModal();
+      });
+    })();
+  </script>
+</body>
+</html>
