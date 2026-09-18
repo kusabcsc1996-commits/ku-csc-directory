@@ -113,6 +113,129 @@
       </div>
     </div>
 
+    <!-- Header & Footer Branding Management Section (จัดการโลโก้และข้อความหัวเว็บ/ท้ายเว็บ) -->
+    <div class="realtime-sync-banner" style="background: var(--surface-card); border: 1px solid var(--surface-card-border); margin-bottom: 1.5rem; flex-direction: column; align-items: stretch; gap: 1.1rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+        <div>
+          <h4 style="margin: 0 0 4px 0; font-size: 1rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-paintbrush" style="color: #10b981;"></i> ปรับแต่งโลโก้ & ข้อความหัวเว็บ / ท้ายเว็บ (Branding)
+          </h4>
+          <p style="margin: 0; font-size: 0.82rem; color: var(--text-muted);">
+            สามารถเปลี่ยนโลโก้และแก้ไขข้อความส่วนหัวเว็บ (Header) และท้ายเว็บ (Footer) พร้อมซิงค์ Real-time ทันที
+          </p>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <button id="saveBrandingBtn" class="btn-primary-sm" title="บันทึกข้อมูลแบรนด์และซิงค์ทันที">
+            <i class="fa-solid fa-floppy-disk"></i> <span>บันทึกแบรนด์</span>
+          </button>
+          <button id="resetBrandingBtn" class="btn-outline-danger-sm" title="คืนค่าเป็นแบรนด์ตั้งต้น">
+            <i class="fa-solid fa-rotate-left"></i> <span>คืนค่าเริ่มต้น</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 2 Columns: Header Branding & Footer Branding -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.25rem;">
+        <!-- 1. Header Branding -->
+        <div style="background: var(--surface-hover, rgba(255,255,255,0.02)); border: 1px solid var(--surface-card-border); border-radius: 12px; padding: 1.1rem;">
+          <h5 style="margin: 0 0 0.85rem 0; font-size: 0.9rem; color: #10b981; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-window-maximize"></i> 1. ส่วนหัวเว็บ (Navbar / Header)
+          </h5>
+
+          <!-- Live Preview Box -->
+          <div style="display: flex; align-items: center; gap: 0.85rem; padding: 0.75rem; background: var(--surface-card); border: 1px dashed var(--surface-card-border); border-radius: 10px; margin-bottom: 0.85rem;">
+            <div id="previewHeaderLogo" style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #006633 0%, #10b981 100%); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.3rem; flex-shrink: 0; overflow: hidden;">
+              <i class="fa-solid fa-leaf"></i>
+            </div>
+            <div>
+              <div id="previewHeaderTitle" style="font-size: 1rem; font-weight: 700; color: var(--text-main);">KU CSC PORTAL</div>
+              <div id="previewHeaderSubtitle" style="font-size: 0.72rem; color: var(--text-muted);">ม.เกษตรศาสตร์ วิทยาเขตเฉลิมพระเกียรติ จ.สกลนคร</div>
+            </div>
+          </div>
+
+          <!-- Controls -->
+          <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+            <div>
+              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 3px;">โลโก้หัวเว็บ:</label>
+              <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                <label class="btn-file-upload" style="padding: 4px 8px; font-size: 0.75rem;">
+                  <i class="fa-solid fa-folder-open"></i> เลือกไฟล์
+                  <input type="file" id="uploadHeaderLogoInput" accept="image/*" style="display: none;">
+                </label>
+                <label class="btn-preset" style="padding: 4px 8px; font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="อัปโหลดตรงเข้า Google Drive">
+                  <i class="fa-brands fa-google-drive" style="color:#10b981;"></i> เข้า Drive
+                  <input type="file" id="uploadHeaderLogoGDriveInput" accept="image/*" style="display: none;">
+                </label>
+                <button type="button" class="btn-preset" id="urlHeaderLogoBtn" style="padding: 4px 8px; font-size: 0.75rem;">
+                  <i class="fa-solid fa-link"></i> ใส่ URL
+                </button>
+                <button type="button" class="btn-preset" id="clearHeaderLogoBtn" style="padding: 4px 8px; font-size: 0.75rem;">
+                  <i class="fa-solid fa-rotate-left"></i> ใช้ไอคอนเดิม
+                </button>
+              </div>
+            </div>
+            <div>
+              <label for="headerTitleInput" style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 3px;">ชื่อหัวเว็บ:</label>
+              <input type="text" id="headerTitleInput" value="KU CSC PORTAL" placeholder="KU CSC PORTAL" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--surface-card-border); background: var(--surface-card); color: var(--text-main); font-size: 0.85rem;">
+            </div>
+            <div>
+              <label for="headerSubtitleInput" style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 3px;">คำบรรยายใต้ชื่อ:</label>
+              <input type="text" id="headerSubtitleInput" value="ม.เกษตรศาสตร์ วิทยาเขตเฉลิมพระเกียรติ จ.สกลนคร" placeholder="ม.เกษตรศาสตร์ วิทยาเขตเฉลิมพระเกียรติ จ.สกลนคร" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--surface-card-border); background: var(--surface-card); color: var(--text-main); font-size: 0.85rem;">
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Footer Branding -->
+        <div style="background: var(--surface-hover, rgba(255,255,255,0.02)); border: 1px solid var(--surface-card-border); border-radius: 12px; padding: 1.1rem;">
+          <h5 style="margin: 0 0 0.85rem 0; font-size: 0.9rem; color: #10b981; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-shoe-prints"></i> 2. ส่วนท้ายเว็บ (Footer)
+          </h5>
+
+          <!-- Live Preview Box -->
+          <div style="display: flex; align-items: center; gap: 0.85rem; padding: 0.75rem; background: var(--surface-card); border: 1px dashed var(--surface-card-border); border-radius: 10px; margin-bottom: 0.85rem;">
+            <div id="previewFooterLogo" style="width: 40px; height: 40px; border-radius: 10px; background: #006633; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.2rem; flex-shrink: 0; overflow: hidden;">
+              <i class="fa-solid fa-leaf"></i>
+            </div>
+            <div>
+              <div id="previewFooterTitle" style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">KU CSC HUB • มหาวิทยาลัยเกษตรศาสตร์</div>
+              <div id="previewFooterSubtitle" style="font-size: 0.72rem; color: var(--text-muted);">วิทยาเขตเฉลิมพระเกียรติ จังหวัดสกลนคร 47000</div>
+            </div>
+          </div>
+
+          <!-- Controls -->
+          <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+            <div>
+              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 3px;">โลโก้ท้ายเว็บ:</label>
+              <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                <label class="btn-file-upload" style="padding: 4px 8px; font-size: 0.75rem;">
+                  <i class="fa-solid fa-folder-open"></i> เลือกไฟล์
+                  <input type="file" id="uploadFooterLogoInput" accept="image/*" style="display: none;">
+                </label>
+                <label class="btn-preset" style="padding: 4px 8px; font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="อัปโหลดตรงเข้า Google Drive">
+                  <i class="fa-brands fa-google-drive" style="color:#10b981;"></i> เข้า Drive
+                  <input type="file" id="uploadFooterLogoGDriveInput" accept="image/*" style="display: none;">
+                </label>
+                <button type="button" class="btn-preset" id="urlFooterLogoBtn" style="padding: 4px 8px; font-size: 0.75rem;">
+                  <i class="fa-solid fa-link"></i> ใส่ URL
+                </button>
+                <button type="button" class="btn-preset" id="clearFooterLogoBtn" style="padding: 4px 8px; font-size: 0.75rem;">
+                  <i class="fa-solid fa-rotate-left"></i> ใช้ไอคอนเดิม
+                </button>
+              </div>
+            </div>
+            <div>
+              <label for="footerTitleInput" style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 3px;">ชื่อท้ายเว็บ:</label>
+              <input type="text" id="footerTitleInput" value="KU CSC HUB • มหาวิทยาลัยเกษตรศาสตร์" placeholder="KU CSC HUB • มหาวิทยาลัยเกษตรศาสตร์" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--surface-card-border); background: var(--surface-card); color: var(--text-main); font-size: 0.85rem;">
+            </div>
+            <div>
+              <label for="footerSubtitleInput" style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 3px;">คำบรรยายใต้ชื่อ:</label>
+              <input type="text" id="footerSubtitleInput" value="วิทยาเขตเฉลิมพระเกียรติ จังหวัดสกลนคร 47000" placeholder="วิทยาเขตเฉลิมพระเกียรติ จังหวัดสกลนคร 47000" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--surface-card-border); background: var(--surface-card); color: var(--text-main); font-size: 0.85rem;">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Controls & Search -->
     <section class="controls-section" style="padding: 0; margin-bottom: 1.5rem;">
       <div class="controls-container" style="padding: 0;">
