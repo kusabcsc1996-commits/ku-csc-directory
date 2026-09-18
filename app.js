@@ -220,6 +220,7 @@ class PortalApp {
 
     this.cacheDom();
     this.initTheme();
+    this.initBranding();
     this.initHeroBackground();
     this.bindEvents();
     this.initRealtimeSync();
@@ -259,6 +260,76 @@ class PortalApp {
     // Toast
     this.toast = document.getElementById("toast");
     this.toastMsg = document.getElementById("toastMsg");
+  }
+
+  initBranding() {
+    const saved = localStorage.getItem("kucsc_site_branding");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        this.applyBranding(parsed);
+      } catch (e) {}
+    }
+  }
+
+  applyBranding(branding) {
+    if (!branding) return;
+
+    // Header Title
+    const headerTitleEl = document.getElementById("headerBrandTitle");
+    if (headerTitleEl && branding.headerTitle) {
+      const words = branding.headerTitle.trim().split(" ");
+      if (words.length > 1) {
+        const last = words.pop();
+        headerTitleEl.innerHTML = `${words.join(" ")} <span>${last}</span>`;
+      } else {
+        headerTitleEl.textContent = branding.headerTitle;
+      }
+    }
+
+    // Header Subtitle
+    const headerSubEl = document.getElementById("headerBrandSubtitle");
+    if (headerSubEl && branding.headerSubtitle !== undefined) {
+      headerSubEl.textContent = branding.headerSubtitle;
+    }
+
+    // Header Logo
+    const headerLogoWrap = document.getElementById("headerBrandLogoWrap");
+    if (headerLogoWrap) {
+      if (branding.headerLogoUrl && branding.headerLogoUrl.trim() !== "") {
+        const resolvedUrl = this.convertGoogleDriveUrl(branding.headerLogoUrl.trim());
+        headerLogoWrap.innerHTML = `<img src="${resolvedUrl}" alt="Logo" style="width:100%; height:100%; object-fit:contain; border-radius:inherit;">`;
+        headerLogoWrap.style.background = "transparent";
+      } else {
+        headerLogoWrap.innerHTML = `<i class="fa-solid fa-leaf brand-icon"></i>`;
+        headerLogoWrap.style.background = "";
+      }
+    }
+
+    // Footer Title
+    const footerTitleEl = document.getElementById("footerBrandTitle");
+    if (footerTitleEl && branding.footerTitle) {
+      footerTitleEl.textContent = branding.footerTitle;
+    }
+
+    // Footer Subtitle
+    const footerSubEl = document.getElementById("footerBrandSubtitle");
+    if (footerSubEl && branding.footerSubtitle !== undefined) {
+      footerSubEl.textContent = branding.footerSubtitle;
+    }
+
+    // Footer Logo
+    const footerLogoWrap = document.getElementById("footerBrandLogoWrap");
+    if (footerLogoWrap) {
+      if (branding.footerLogoUrl && branding.footerLogoUrl.trim() !== "") {
+        const resolvedUrl = this.convertGoogleDriveUrl(branding.footerLogoUrl.trim());
+        footerLogoWrap.innerHTML = `<img src="${resolvedUrl}" alt="Logo" style="width:100%; height:100%; object-fit:contain; border-radius:inherit;">`;
+        footerLogoWrap.style.background = "transparent";
+      } else {
+        footerLogoWrap.innerHTML = `<i class="fa-solid fa-leaf"></i>`;
+        footerLogoWrap.style.background = "";
+      }
+    }
   }
 
   initHeroBackground() {
@@ -368,6 +439,11 @@ class PortalApp {
           this.render();
           hasChanges = true;
         }
+        if (data.siteBranding) {
+          localStorage.setItem("kucsc_site_branding", JSON.stringify(data.siteBranding));
+          this.applyBranding(data.siteBranding);
+          hasChanges = true;
+        }
         if (hasChanges) {
           console.log("KU CSC Hub: Synced latest cloud data from Google Drive");
         }
@@ -394,6 +470,9 @@ class PortalApp {
         } else if (event.data.type === "HERO_BG_UPDATED") {
           this.applyHeroBg(event.data.heroBg);
           this.showToast("⚡ อัปเดตรูปพื้นหลังส่วนหัวแบบ Real-time แล้ว!");
+        } else if (event.data.type === "BRANDING_UPDATED") {
+          this.applyBranding(event.data.branding);
+          this.showToast("⚡ อัปเดตโลโก้และข้อความแบรนด์แบบ Real-time แล้ว!");
         }
       };
     }
@@ -410,6 +489,11 @@ class PortalApp {
       } else if (e.key === "kucsc_hero_bg") {
         this.applyHeroBg(e.newValue);
         this.showToast("⚡ อัปเดตรูปพื้นหลังส่วนหัวแบบ Real-time แล้ว!");
+      } else if (e.key === "kucsc_site_branding" && e.newValue) {
+        try {
+          this.applyBranding(JSON.parse(e.newValue));
+          this.showToast("⚡ อัปเดตโลโก้และข้อความแบรนด์แบบ Real-time แล้ว!");
+        } catch (err) {}
       }
     });
   }
