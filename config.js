@@ -13,5 +13,5 @@
 window.KUCSC_CONFIG = {
   // ← วาง Google Apps Script Web App URL ของคุณที่นี่
   // ตัวอย่าง: "https://script.google.com/macros/s/AKfycb.../exec"
-  gasEndpoint: "https://script.google.com/macros/s/AKfycbzDoxBvT3yEHqMdh3wBVfQfpY16RshQwYMTY8JMqzKbf6Y8QgiNUUuWdfN6p2ZuIg5h/exec"
+  gasEndpoint: "https://script.google.com/macros/s/AKfycbxc6UO6Cr13MjWUFLAvZ6ghfKShGG7ADAkPLLTgdgdo1Fw70tWmQmbQZysEVBzHbXQH/exec"
 };
