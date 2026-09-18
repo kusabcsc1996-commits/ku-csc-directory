@@ -202,9 +202,19 @@ const INITIAL_DEPARTMENTS = [
   }
 ];
 
+const DEFAULT_BRANDING = {
+  headerTitle: "KU CSC PORTAL",
+  headerSubtitle: "ม.เกษตรศาสตร์ วิทยาเขตเฉลิมพระเกียรติ จ.สกลนคร",
+  headerLogoUrl: "",
+  footerTitle: "KU CSC HUB • มหาวิทยาลัยเกษตรศาสตร์",
+  footerSubtitle: "วิทยาเขตเฉลิมพระเกียรติ จังหวัดสกลนคร 47000",
+  footerLogoUrl: ""
+};
+
 class EditorApp {
   constructor() {
     this.departments = [];
+    this.branding = { ...DEFAULT_BRANDING };
     this.activeFilter = "all";
     this.searchQuery = "";
     this.syncChannel = null;
@@ -214,6 +224,7 @@ class EditorApp {
     this.cacheDom();
     this.initTheme();
     this.initHeroBg();
+    this.initBranding();
     this.initRealtimeSync();
     this.loadData();
     this.bindEvents();
@@ -239,6 +250,30 @@ class EditorApp {
     this.urlHeroBgBtn = document.getElementById("urlHeroBgBtn");
     this.resetHeroBgBtn = document.getElementById("resetHeroBgBtn");
     this.clearHeroBgBtn = document.getElementById("clearHeroBgBtn");
+
+    // Branding Management controls
+    this.previewHeaderLogo = document.getElementById("previewHeaderLogo");
+    this.previewHeaderTitle = document.getElementById("previewHeaderTitle");
+    this.previewHeaderSubtitle = document.getElementById("previewHeaderSubtitle");
+    this.uploadHeaderLogoInput = document.getElementById("uploadHeaderLogoInput");
+    this.uploadHeaderLogoGDriveInput = document.getElementById("uploadHeaderLogoGDriveInput");
+    this.urlHeaderLogoBtn = document.getElementById("urlHeaderLogoBtn");
+    this.clearHeaderLogoBtn = document.getElementById("clearHeaderLogoBtn");
+    this.headerTitleInput = document.getElementById("headerTitleInput");
+    this.headerSubtitleInput = document.getElementById("headerSubtitleInput");
+
+    this.previewFooterLogo = document.getElementById("previewFooterLogo");
+    this.previewFooterTitle = document.getElementById("previewFooterTitle");
+    this.previewFooterSubtitle = document.getElementById("previewFooterSubtitle");
+    this.uploadFooterLogoInput = document.getElementById("uploadFooterLogoInput");
+    this.uploadFooterLogoGDriveInput = document.getElementById("uploadFooterLogoGDriveInput");
+    this.urlFooterLogoBtn = document.getElementById("urlFooterLogoBtn");
+    this.clearFooterLogoBtn = document.getElementById("clearFooterLogoBtn");
+    this.footerTitleInput = document.getElementById("footerTitleInput");
+    this.footerSubtitleInput = document.getElementById("footerSubtitleInput");
+
+    this.saveBrandingBtn = document.getElementById("saveBrandingBtn");
+    this.resetBrandingBtn = document.getElementById("resetBrandingBtn");
 
     // Modal elements
     this.editorModalBackdrop = document.getElementById("editorModalBackdrop");
@@ -404,6 +439,100 @@ class EditorApp {
     this.saveSettingsToGAS();
   }
 
+  // ── Branding Management (ปรับแต่งโลโก้ & ข้อความหัวเว็บ / ท้ายเว็บ) ────────
+
+  initBranding() {
+    try {
+      const saved = localStorage.getItem("kucsc_site_branding");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        this.branding = { ...DEFAULT_BRANDING, ...parsed };
+      } else {
+        this.branding = { ...DEFAULT_BRANDING };
+      }
+    } catch (e) {
+      console.warn("Could not parse saved branding, using defaults", e);
+      this.branding = { ...DEFAULT_BRANDING };
+    }
+    this.updateBrandingFormAndPreview();
+  }
+
+  updateBrandingFormAndPreview() {
+    if (this.headerTitleInput) this.headerTitleInput.value = this.branding.headerTitle || DEFAULT_BRANDING.headerTitle;
+    if (this.headerSubtitleInput) this.headerSubtitleInput.value = this.branding.headerSubtitle || "";
+    if (this.footerTitleInput) this.footerTitleInput.value = this.branding.footerTitle || DEFAULT_BRANDING.footerTitle;
+    if (this.footerSubtitleInput) this.footerSubtitleInput.value = this.branding.footerSubtitle || "";
+    this.renderBrandingPreview();
+  }
+
+  renderBrandingPreview() {
+    // 1. Header Logo Preview
+    if (this.previewHeaderLogo) {
+      if (this.branding.headerLogoUrl && this.branding.headerLogoUrl.trim() !== "") {
+        const resolvedUrl = this.convertGoogleDriveUrl(this.branding.headerLogoUrl.trim());
+        this.previewHeaderLogo.innerHTML = `<img src="${resolvedUrl}" alt="Logo" style="width:100%; height:100%; object-fit:contain; border-radius:inherit;">`;
+        this.previewHeaderLogo.style.background = "transparent";
+      } else {
+        this.previewHeaderLogo.innerHTML = `<i class="fa-solid fa-leaf"></i>`;
+        this.previewHeaderLogo.style.background = "linear-gradient(135deg, #006633 0%, #10b981 100%)";
+      }
+    }
+
+    // Header Title & Subtitle Preview
+    if (this.previewHeaderTitle) {
+      const title = this.branding.headerTitle || DEFAULT_BRANDING.headerTitle;
+      const words = title.trim().split(" ");
+      if (words.length > 1) {
+        const last = words.pop();
+        this.previewHeaderTitle.innerHTML = `${words.join(" ")} <span style="color:#10b981;">${last}</span>`;
+      } else {
+        this.previewHeaderTitle.textContent = title;
+      }
+    }
+    if (this.previewHeaderSubtitle) {
+      this.previewHeaderSubtitle.textContent = this.branding.headerSubtitle || "";
+    }
+
+    // 2. Footer Logo Preview
+    if (this.previewFooterLogo) {
+      if (this.branding.footerLogoUrl && this.branding.footerLogoUrl.trim() !== "") {
+        const resolvedUrl = this.convertGoogleDriveUrl(this.branding.footerLogoUrl.trim());
+        this.previewFooterLogo.innerHTML = `<img src="${resolvedUrl}" alt="Logo" style="width:100%; height:100%; object-fit:contain; border-radius:inherit;">`;
+        this.previewFooterLogo.style.background = "transparent";
+      } else {
+        this.previewFooterLogo.innerHTML = `<i class="fa-solid fa-leaf"></i>`;
+        this.previewFooterLogo.style.background = "#006633";
+      }
+    }
+
+    // Footer Title & Subtitle Preview
+    if (this.previewFooterTitle) {
+      this.previewFooterTitle.textContent = this.branding.footerTitle || DEFAULT_BRANDING.footerTitle;
+    }
+    if (this.previewFooterSubtitle) {
+      this.previewFooterSubtitle.textContent = this.branding.footerSubtitle || "";
+    }
+  }
+
+  saveBranding(notify = true, toastMsg = "บันทึกข้อมูลและโลโก้ส่วนหัว/ท้ายเว็บเรียบร้อยแล้ว! 🎨") {
+    try {
+      localStorage.setItem("kucsc_site_branding", JSON.stringify(this.branding));
+      if (notify && this.syncChannel) {
+        this.syncChannel.postMessage({
+          type: "BRANDING_UPDATED",
+          branding: this.branding,
+          siteBranding: this.branding
+        });
+      }
+      if (toastMsg) {
+        this.showToast(toastMsg);
+      }
+      this.saveSettingsToGAS();
+    } catch (e) {
+      console.error("Failed to save branding to localStorage", e);
+    }
+  }
+
   initTheme() {
     const savedTheme = localStorage.getItem("kucsc_theme") || 
       (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
@@ -441,6 +570,12 @@ class EditorApp {
           this.render();
         } else if (event.data.type === "HERO_BG_UPDATED") {
           this.updateHeroBgPreview(event.data.heroBg);
+        } else if (event.data.type === "BRANDING_UPDATED") {
+          const brandData = event.data.branding || event.data.siteBranding;
+          if (brandData) {
+            this.branding = { ...DEFAULT_BRANDING, ...brandData };
+            this.updateBrandingFormAndPreview();
+          }
         }
       };
     }
@@ -487,7 +622,7 @@ class EditorApp {
   }
 
   /**
-   * Save departments & hero background to Google Apps Script (Cross-Device Cloud Sync)
+   * Save departments, hero background & branding to Google Apps Script (Cross-Device Cloud Sync)
    */
   async saveSettingsToGAS() {
     const endpoint = this.gdriveEndpoint || (window.KUCSC_CONFIG && window.KUCSC_CONFIG.gasEndpoint);
@@ -501,7 +636,8 @@ class EditorApp {
         body: JSON.stringify({
           action: "saveSettings",
           departments: this.departments,
-          heroBg: heroBg
+          heroBg: heroBg,
+          siteBranding: this.branding
         })
       });
       const json = await resp.json();
@@ -536,6 +672,12 @@ class EditorApp {
           this.departments = data.departments;
           localStorage.setItem("kucsc_directory_data", JSON.stringify(this.departments));
           this.render();
+          changed = true;
+        }
+        if (data.siteBranding && typeof data.siteBranding === "object") {
+          this.branding = { ...DEFAULT_BRANDING, ...data.siteBranding };
+          localStorage.setItem("kucsc_site_branding", JSON.stringify(this.branding));
+          this.updateBrandingFormAndPreview();
           changed = true;
         }
         if (changed) {
@@ -595,6 +737,171 @@ class EditorApp {
         const ok = confirm("คุณต้องการลบรูปภาพพื้นหลังส่วนหัวออก (ใช้สีพื้นหลังปกติ) ใช่หรือไม่?");
         if (ok) {
           this.setHeroBg("", "ลบรูปพื้นหลังส่วนหัวเรียบร้อยแล้ว");
+        }
+      });
+    }
+
+    // ── Branding Management Controls (หัวเว็บ & ท้ายเว็บ) ───────────────────
+
+    // Header Branding Inputs & Live Preview
+    if (this.headerTitleInput) {
+      this.headerTitleInput.addEventListener("input", (e) => {
+        this.branding.headerTitle = e.target.value;
+        this.renderBrandingPreview();
+      });
+    }
+
+    if (this.headerSubtitleInput) {
+      this.headerSubtitleInput.addEventListener("input", (e) => {
+        this.branding.headerSubtitle = e.target.value;
+        this.renderBrandingPreview();
+      });
+    }
+
+    // Header Logo: Upload from device
+    if (this.uploadHeaderLogoInput) {
+      this.uploadHeaderLogoInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            this.branding.headerLogoUrl = evt.target.result;
+            this.renderBrandingPreview();
+            this.saveBranding(true, "เปลี่ยนโลโก้ส่วนหัวและซิงค์ Real-time สำเร็จ! 🎨");
+            this.uploadHeaderLogoInput.value = "";
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    // Header Logo: Upload directly to Google Drive
+    if (this.uploadHeaderLogoGDriveInput) {
+      this.uploadHeaderLogoGDriveInput.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        this.showToast("กำลังอัปโหลดโลโก้ส่วนหัวเข้า Google Drive... ☁️");
+        const url = await this.uploadToGoogleDrive(file, "KU CSC Branding");
+        this.uploadHeaderLogoGDriveInput.value = "";
+        if (url) {
+          this.branding.headerLogoUrl = url;
+          this.renderBrandingPreview();
+          this.saveBranding(true, "อัปโหลดโลโก้ส่วนหัวเข้า Google Drive และซิงค์ Real-time สำเร็จ! ☁️⚡");
+        }
+      });
+    }
+
+    // Header Logo: Enter image URL
+    if (this.urlHeaderLogoBtn) {
+      this.urlHeaderLogoBtn.addEventListener("click", () => {
+        const current = this.branding.headerLogoUrl || "";
+        const inputUrl = prompt("กรุณาระบุ URL รูปภาพสำหรับโลโก้ส่วนหัว (Header Logo):", current);
+        if (inputUrl !== null) {
+          this.branding.headerLogoUrl = this.convertGoogleDriveUrl(inputUrl.trim());
+          this.renderBrandingPreview();
+          this.saveBranding(true, "เปลี่ยนโลโก้ส่วนหัวและซิงค์ Real-time สำเร็จ! 🎨");
+        }
+      });
+    }
+
+    // Header Logo: Reset to default icon
+    if (this.clearHeaderLogoBtn) {
+      this.clearHeaderLogoBtn.addEventListener("click", () => {
+        this.branding.headerLogoUrl = "";
+        this.renderBrandingPreview();
+        this.saveBranding(true, "รีเซ็ตโลโก้ส่วนหัวเป็นค่าเริ่มต้นแล้ว 🔄");
+      });
+    }
+
+    // Footer Branding Inputs & Live Preview
+    if (this.footerTitleInput) {
+      this.footerTitleInput.addEventListener("input", (e) => {
+        this.branding.footerTitle = e.target.value;
+        this.renderBrandingPreview();
+      });
+    }
+
+    if (this.footerSubtitleInput) {
+      this.footerSubtitleInput.addEventListener("input", (e) => {
+        this.branding.footerSubtitle = e.target.value;
+        this.renderBrandingPreview();
+      });
+    }
+
+    // Footer Logo: Upload from device
+    if (this.uploadFooterLogoInput) {
+      this.uploadFooterLogoInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            this.branding.footerLogoUrl = evt.target.result;
+            this.renderBrandingPreview();
+            this.saveBranding(true, "เปลี่ยนโลโก้ส่วนท้ายและซิงค์ Real-time สำเร็จ! 🎨");
+            this.uploadFooterLogoInput.value = "";
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    // Footer Logo: Upload directly to Google Drive
+    if (this.uploadFooterLogoGDriveInput) {
+      this.uploadFooterLogoGDriveInput.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        this.showToast("กำลังอัปโหลดโลโก้ส่วนท้ายเข้า Google Drive... ☁️");
+        const url = await this.uploadToGoogleDrive(file, "KU CSC Branding");
+        this.uploadFooterLogoGDriveInput.value = "";
+        if (url) {
+          this.branding.footerLogoUrl = url;
+          this.renderBrandingPreview();
+          this.saveBranding(true, "อัปโหลดโลโก้ส่วนท้ายเข้า Google Drive และซิงค์ Real-time สำเร็จ! ☁️⚡");
+        }
+      });
+    }
+
+    // Footer Logo: Enter image URL
+    if (this.urlFooterLogoBtn) {
+      this.urlFooterLogoBtn.addEventListener("click", () => {
+        const current = this.branding.footerLogoUrl || "";
+        const inputUrl = prompt("กรุณาระบุ URL รูปภาพสำหรับโลโก้ส่วนท้าย (Footer Logo):", current);
+        if (inputUrl !== null) {
+          this.branding.footerLogoUrl = this.convertGoogleDriveUrl(inputUrl.trim());
+          this.renderBrandingPreview();
+          this.saveBranding(true, "เปลี่ยนโลโก้ส่วนท้ายและซิงค์ Real-time สำเร็จ! 🎨");
+        }
+      });
+    }
+
+    // Footer Logo: Reset to default icon
+    if (this.clearFooterLogoBtn) {
+      this.clearFooterLogoBtn.addEventListener("click", () => {
+        this.branding.footerLogoUrl = "";
+        this.renderBrandingPreview();
+        this.saveBranding(true, "รีเซ็ตโลโก้ส่วนท้ายเป็นค่าเริ่มต้นแล้ว 🔄");
+      });
+    }
+
+    // Save & Reset Branding Buttons
+    if (this.saveBrandingBtn) {
+      this.saveBrandingBtn.addEventListener("click", () => {
+        this.branding.headerTitle = (this.headerTitleInput ? this.headerTitleInput.value : "").trim() || DEFAULT_BRANDING.headerTitle;
+        this.branding.headerSubtitle = (this.headerSubtitleInput ? this.headerSubtitleInput.value : "").trim();
+        this.branding.footerTitle = (this.footerTitleInput ? this.footerTitleInput.value : "").trim() || DEFAULT_BRANDING.footerTitle;
+        this.branding.footerSubtitle = (this.footerSubtitleInput ? this.footerSubtitleInput.value : "").trim();
+        this.renderBrandingPreview();
+        this.saveBranding(true, "บันทึกข้อมูลและโลโก้ส่วนหัว/ท้ายเว็บเรียบร้อยแล้ว! 🎨⚡");
+      });
+    }
+
+    // Reset all branding to system defaults
+    if (this.resetBrandingBtn) {
+      this.resetBrandingBtn.addEventListener("click", () => {
+        if (confirm("คุณต้องการคืนค่าชื่อและโลโก้ส่วนหัว/ท้ายเว็บกลับเป็นค่าเริ่มต้นทั้งหมดใช่หรือไม่?")) {
+          this.branding = { ...DEFAULT_BRANDING };
+          this.updateBrandingFormAndPreview();
+          this.saveBranding(true, "คืนค่าข้อมูลส่วนหัวและท้ายเว็บกลับเป็นค่าเริ่มต้นแล้ว 🔄");
         }
       });
     }
