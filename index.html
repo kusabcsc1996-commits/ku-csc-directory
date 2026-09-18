@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KU CSC Links Portal | ศูนย์รวมช่องทางติดต่อ มก.ฉกส.</title>
+  <meta name="description" content="ศูนย์รวมช่องทางติดต่อ ลิงก์เพจ คณะ หน่วยงาน องค์กร และสโมสรนิสิต มหาวิทยาลัยเกษตรศาสตร์ วิทยาเขตเฉลิมพระเกียรติ จังหวัดสกลนคร">
+  
+  <!-- Google Fonts: Prompt & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ambient Glow Background Effects -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <!-- Header & Navigation -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <div class="brand-logo-wrap">
+          <i class="fa-solid fa-leaf brand-icon"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">KU CSC <span>PORTAL</span></span>
+          <span class="brand-subtitle">ม.เกษตรศาสตร์ วิทยาเขตเฉลิมพระเกียรติ จ.สกลนคร</span>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <button id="themeToggleBtn" class="btn-icon" aria-label="สลับโหมดมืด/สว่าง" title="สลับโหมดมืด/สว่าง">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+        <a href="editor.html" class="nav-editor-link" title="เปิดหน้าสำหรับแก้ไขข้อมูลและเปลี่ยนรูปภาพ">
+          <i class="fa-solid fa-pen-to-square"></i>
+          <span>แก้ไขข้อมูล & รูปภาพ</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section (แลนด์มาร์คซุ้มประตู มก.ฉกส.) -->
+  <section class="hero-section" id="heroSection" style="background-image: url('./assets/hero_landmark_bg.jpg');">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="pulse-dot"></span>
+        <span id="heroBadgeText">ช่องทางติดต่อทางการ & สโมสรนิสิต</span>
+      </div>
+      <h1 class="hero-title" id="heroBadgeTitle">
+        ศูนย์รวมช่องทางติดต่อ <br>
+        <span class="gradient-text">มหาวิทยาลัยเกษตรศาสตร์ วิทยาเขตเฉลิมพระเกียรติ จ.สกลนคร</span>
+      </h1>
+      <p class="hero-desc" id="heroDesc">
+        ค้นหาลิงก์ Facebook Pages, เว็บไซต์ และช่องทางติดต่อของทุกคณะ สโมสรนิสิต และหน่วยงานสนับสนุนการศึกษาในที่เดียว สะดวก รวดเร็ว สวยงาม
+      </p>
+
+      <!-- Stats Bar -->
+      <div class="stats-row">
+        <div class="stat-item">
+          <span class="stat-number" id="totalCount">0</span>
+          <span class="stat-label">หน่วยงานทั้งหมด</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-number" id="facultyCount">0</span>
+          <span class="stat-label">คณะวิชา</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-number" id="unitCount">0</span>
+          <span class="stat-label">หน่วยงานบริการ</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-number" id="clubCount">0</span>
+          <span class="stat-label">องค์กร/สโมสรนิสิต</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Controls & Search Section -->
+  <section class="controls-section">
+    <div class="controls-container">
+      <!-- Search Input -->
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="ค้นหาชื่อคณะ, สโมสร, งานทะเบียน, กิจการนิสิต, หรือคีย์เวิร์ด..."
+          autocomplete="off"
+        >
+        <button id="clearSearchBtn" class="clear-search-btn" title="ล้างการค้นหา">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Filter Pills -->
+      <div class="filter-pills" id="categoryFilters">
+        <button class="filter-pill active" data-category="all">
+          <i class="fa-solid fa-layer-group"></i> ทั้งหมด
+        </button>
+        <button class="filter-pill" data-category="faculty">
+          <i class="fa-solid fa-graduation-cap"></i> คณะวิชา
+        </button>
+        <button class="filter-pill" data-category="service">
+          <i class="fa-solid fa-briefcase"></i> หน่วยงานบริการ & สนับสนุน
+        </button>
+        <button class="filter-pill" data-category="student-gov">
+          <i class="fa-solid fa-users-gear"></i> องค์กรนิสิต
+        </button>
+        <button class="filter-pill" data-category="student-club">
+          <i class="fa-solid fa-flag"></i> สโมสรนิสิตคณะ
+        </button>
+      </div>
+
+      <!-- View & Quick Info Bar -->
+      <div class="view-options">
+        <div class="results-count">
+          พบ <span id="filteredCount">0</span> รายการ
+        </div>
+        <div class="view-toggle-btns">
+          <button id="gridViewBtn" class="view-btn active" title="มุมมองการ์ด">
+            <i class="fa-solid fa-table-cells-large"></i>
+          </button>
+          <button id="listViewBtn" class="view-btn" title="มุมมองรายการ">
+            <i class="fa-solid fa-list"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Directory Section -->
+  <main class="main-content">
+    <div class="directory-container">
+      <!-- Cards Grid -->
+      <div class="cards-grid" id="directoryGrid">
+        <!-- Dynamically rendered via JS -->
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" id="emptyState" style="display: none;">
+        <div class="empty-icon">
+          <i class="fa-solid fa-filter-circle-xmark"></i>
+        </div>
+        <h3>ไม่พบหน่วยงานที่คุณค้นหา</h3>
+        <p>ลองเปลี่ยนคำค้นหา หรือกดล้างการค้นหาเพื่อดูข้อมูลทั้งหมด</p>
+        <button class="btn-secondary" id="resetSearchBtn">ล้างการค้นหา</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="footer-logo">
+            <i class="fa-solid fa-leaf"></i>
+          </div>
+          <div>
+            <h4>KU CSC HUB • มหาวิทยาลัยเกษตรศาสตร์</h4>
+            <p>วิทยาเขตเฉลิมพระเกียรติ จังหวัดสกลนคร 47000</p>
+          </div>
+        </div>
+        <div class="footer-campus-link">
+          <a href="https://www.facebook.com/Kasetsart.Sakonnakhon" target="_blank" rel="noopener noreferrer" class="btn-outline">
+            <i class="fa-brands fa-facebook"></i> เพจหลักวิทยาเขตสกลนคร
+          </a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 KU CSC Link Directory. Designed with modern aesthetics & care for Kasetsart University students & staff.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modal: QR Code Share -->
+  <div class="modal-backdrop" id="qrModalBackdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="qrModalTitle"><i class="fa-solid fa-qrcode"></i> สแกน QR Code</h3>
+        <button class="modal-close-btn" id="closeQrModalBtn"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body qr-modal-body">
+        <div class="qr-preview-box" id="qrcodeContainer"></div>
+        <p class="qr-target-title" id="qrTargetName">ชื่อหน่วยงาน</p>
+        <p class="qr-target-url" id="qrTargetUrl">https://facebook.com/...</p>
+        <div class="qr-actions">
+          <button class="btn-secondary" id="copyUrlFromModalBtn">
+            <i class="fa-solid fa-copy"></i> คัดลอกลิงก์
+          </button>
+          <a id="openUrlFromModalBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn-primary">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> เปิดเพจทันที
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Toast Notification -->
+  <div class="toast-notification" id="toast">
+    <i class="fa-solid fa-circle-check toast-icon"></i>
+    <span id="toastMsg">คัดลอกลิงก์เรียบร้อยแล้ว</span>
+  </div>
+
+  <!-- QRCode.js Library from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
