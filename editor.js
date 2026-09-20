@@ -605,20 +605,28 @@ class EditorApp {
   saveData(notify = true, toastMessage = "บันทึกและซิงค์ Real-time สำเร็จแล้ว ⚡") {
     try {
       localStorage.setItem("kucsc_directory_data", JSON.stringify(this.departments));
-      if (notify && this.syncChannel) {
-        this.syncChannel.postMessage({
-          type: "DATA_UPDATED",
-          departments: this.departments
-        });
-      }
-      if (toastMessage) {
-        this.showToast(toastMessage);
-      }
-      this.saveSettingsToGAS();
     } catch (e) {
-      console.error("Failed to save data to localStorage", e);
-      alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล (อาจเกิดจากขนาดรูปภาพใหญ่เกินขีดจำกัดเบราว์เซอร์)");
+      console.warn("LocalStorage quota reached when saving departments, using lightweight cache:", e);
+      try {
+        const lightweight = this.departments.map(d => ({
+          ...d,
+          bannerUrl: (d.bannerUrl && d.bannerUrl.startsWith("http")) ? d.bannerUrl : "",
+          logoUrl: (d.logoUrl && d.logoUrl.startsWith("http")) ? d.logoUrl : ""
+        }));
+        localStorage.setItem("kucsc_directory_data", JSON.stringify(lightweight));
+      } catch (e2) {}
     }
+
+    if (notify && this.syncChannel) {
+      this.syncChannel.postMessage({
+        type: "DATA_UPDATED",
+        departments: this.departments
+      });
+    }
+    if (toastMessage) {
+      this.showToast(toastMessage);
+    }
+    this.saveSettingsToGAS();
   }
 
   /**
@@ -659,27 +667,51 @@ class EditorApp {
     if (!endpoint || endpoint.trim() === "") return;
 
     try {
-      const resp = await fetch(`${endpoint.trim()}?action=getSettings`);
+      const sep = endpoint.includes("?") ? "&" : "?";
+      const resp = await fetch(`${endpoint.trim()}${sep}action=getSettings&_t=${Date.now()}`);
       const data = await resp.json();
       if (data && data.status === "ok") {
         let changed = false;
-        if (data.heroBg !== undefined && data.heroBg !== null && data.heroBg !== "") {
-          localStorage.setItem("kucsc_hero_bg", data.heroBg);
-          this.updateHeroBgPreview(data.heroBg);
-          changed = true;
-        }
-        if (Array.isArray(data.departments) && data.departments.length > 0) {
-          this.departments = data.departments;
-          localStorage.setItem("kucsc_directory_data", JSON.stringify(this.departments));
-          this.render();
-          changed = true;
-        }
+
+        // 1. Branding
         if (data.siteBranding && typeof data.siteBranding === "object") {
           this.branding = { ...DEFAULT_BRANDING, ...data.siteBranding };
-          localStorage.setItem("kucsc_site_branding", JSON.stringify(this.branding));
           this.updateBrandingFormAndPreview();
           changed = true;
+          try {
+            localStorage.setItem("kucsc_site_branding", JSON.stringify(this.branding));
+          } catch (e) {}
         }
+
+        // 2. Hero Background
+        if (data.heroBg !== undefined && data.heroBg !== null && data.heroBg !== "") {
+          this.updateHeroBgPreview(data.heroBg);
+          changed = true;
+          try {
+            localStorage.setItem("kucsc_hero_bg", data.heroBg);
+          } catch (e) {}
+        }
+
+        // 3. Departments
+        if (Array.isArray(data.departments) && data.departments.length > 0) {
+          this.departments = data.departments;
+          this.render();
+          changed = true;
+          try {
+            localStorage.setItem("kucsc_directory_data", JSON.stringify(this.departments));
+          } catch (storageErr) {
+            console.warn("LocalStorage quota exceeded in editor, using lightweight fallback cache:", storageErr);
+            try {
+              const lightweight = this.departments.map(d => ({
+                ...d,
+                bannerUrl: (d.bannerUrl && d.bannerUrl.startsWith("http")) ? d.bannerUrl : "",
+                logoUrl: (d.logoUrl && d.logoUrl.startsWith("http")) ? d.logoUrl : ""
+              }));
+              localStorage.setItem("kucsc_directory_data", JSON.stringify(lightweight));
+            } catch (e2) {}
+          }
+        }
+
         if (changed) {
           this.showToast("☁️ ซิงค์ข้อมูลล่าสุดจาก Google Drive เรียบร้อยแล้ว");
         }
@@ -979,9 +1011,19 @@ class EditorApp {
 
     // Modal Form: Banner File Upload & Clear
     if (this.formBannerFileInput) {
-      this.formBannerFileInput.addEventListener("change", (e) => {
+      this.formBannerFileInput.addEventListener("change", async (e) => {
         const file = e.target.files[0];
         if (file) {
+          if (this.gdriveEndpoint) {
+            this.showToast("กำลังอัปโหลดแบนเนอร์เข้า Google Drive... ☁️");
+            const url = await this.uploadToGoogleDrive(file, "KU CSC Banners");
+            if (url) {
+              this.formBannerUrl.value = url;
+              this.updateBannerPreview(url);
+              this.showToast("อัปโหลดแบนเนอร์เข้า Google Drive สำเร็จ! ☁️");
+              return;
+            }
+          }
           const reader = new FileReader();
           reader.onload = (evt) => {
             this.formBannerUrl.value = evt.target.result;
@@ -1003,9 +1045,19 @@ class EditorApp {
 
     // Modal Form: Logo File Upload & Clear
     if (this.formLogoFileInput) {
-      this.formLogoFileInput.addEventListener("change", (e) => {
+      this.formLogoFileInput.addEventListener("change", async (e) => {
         const file = e.target.files[0];
         if (file) {
+          if (this.gdriveEndpoint) {
+            this.showToast("กำลังอัปโหลดโลโก้เข้า Google Drive... ☁️");
+            const url = await this.uploadToGoogleDrive(file, "KU CSC Logos");
+            if (url) {
+              this.formLogoUrl.value = url;
+              this.updateLogoPreview(url);
+              this.showToast("อัปโหลดโลโก้เข้า Google Drive สำเร็จ! ☁️");
+              return;
+            }
+          }
           const reader = new FileReader();
           reader.onload = (evt) => {
             this.formLogoUrl.value = evt.target.result;
@@ -1035,13 +1087,23 @@ class EditorApp {
 
     // Direct Banner File Picker Handler
     if (this.directBannerFilePicker) {
-      this.directBannerFilePicker.addEventListener("change", (e) => {
+      this.directBannerFilePicker.addEventListener("change", async (e) => {
         const file = e.target.files[0];
         if (file && this.currentDirectTargetId) {
+          const targetId = this.currentDirectTargetId;
+          this.directBannerFilePicker.value = "";
+          if (this.gdriveEndpoint) {
+            this.showToast("กำลังอัปโหลดแบนเนอร์เข้า Google Drive... ☁️");
+            const url = await this.uploadToGoogleDrive(file, "KU CSC Banners");
+            if (url) {
+              this.updateDepartmentBanner(targetId, url);
+              this.showToast("อัปโหลดแบนเนอร์เข้า Google Drive และซิงค์สำเร็จ! ☁️⚡");
+              return;
+            }
+          }
           const reader = new FileReader();
           reader.onload = (evt) => {
-            this.updateDepartmentBanner(this.currentDirectTargetId, evt.target.result);
-            this.directBannerFilePicker.value = "";
+            this.updateDepartmentBanner(targetId, evt.target.result);
           };
           reader.readAsDataURL(file);
         }
@@ -1050,13 +1112,23 @@ class EditorApp {
 
     // Direct Logo File Picker Handler
     if (this.directLogoFilePicker) {
-      this.directLogoFilePicker.addEventListener("change", (e) => {
+      this.directLogoFilePicker.addEventListener("change", async (e) => {
         const file = e.target.files[0];
         if (file && this.currentDirectTargetId) {
+          const targetId = this.currentDirectTargetId;
+          this.directLogoFilePicker.value = "";
+          if (this.gdriveEndpoint) {
+            this.showToast("กำลังอัปโหลดโลโก้เข้า Google Drive... ☁️");
+            const url = await this.uploadToGoogleDrive(file, "KU CSC Logos");
+            if (url) {
+              this.updateDepartmentLogo(targetId, url);
+              this.showToast("อัปโหลดโลโก้เข้า Google Drive และซิงค์สำเร็จ! ☁️⚡");
+              return;
+            }
+          }
           const reader = new FileReader();
           reader.onload = (evt) => {
-            this.updateDepartmentLogo(this.currentDirectTargetId, evt.target.result);
-            this.directLogoFilePicker.value = "";
+            this.updateDepartmentLogo(targetId, evt.target.result);
           };
           reader.readAsDataURL(file);
         }
