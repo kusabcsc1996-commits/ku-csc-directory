@@ -171,6 +171,32 @@
     </div>
   </header>
 
+  <!-- ── Department Quick-Nav Bar (Top Navigation) ─────────────────── -->
+  <nav class="dept-nav-bar" id="deptNavBar" aria-label="กรองตามประเภทหน่วยงาน">
+    <div class="dept-nav-inner">
+      <button class="dept-nav-btn active" data-filter-top="all" title="แสดงทั้งหมด">
+        <i class="fa-solid fa-layer-group"></i>
+        <span>ทั้งหมด</span>
+      </button>
+      <button class="dept-nav-btn" data-filter-top="faculty" title="คณะวิชา">
+        <i class="fa-solid fa-graduation-cap"></i>
+        <span>คณะวิชา</span>
+      </button>
+      <button class="dept-nav-btn" data-filter-top="service" title="หน่วยงานบริการ">
+        <i class="fa-solid fa-briefcase"></i>
+        <span>หน่วยงานบริการ</span>
+      </button>
+      <button class="dept-nav-btn" data-filter-top="student-gov" title="องค์กรนิสิต">
+        <i class="fa-solid fa-users-gear"></i>
+        <span>องค์กรนิสิต</span>
+      </button>
+      <button class="dept-nav-btn" data-filter-top="student-club" title="สโมสรนิสิตคณะ">
+        <i class="fa-solid fa-flag"></i>
+        <span>สโมสรนิสิต</span>
+      </button>
+    </div>
+  </nav>
+
   <!-- Hero Section (แลนด์มาร์คซุ้มประตู มก.ฉกส.) -->
   <section class="hero-section" id="heroSection" style="background-image: url('./assets/hero_landmark_bg.jpg');">
     <div class="hero-content">
@@ -228,8 +254,8 @@
         </button>
       </div>
 
-      <!-- Filter Pills -->
-      <div class="filter-pills" id="categoryFilters">
+      <!-- Filter Pills (hidden — replaced by dept-nav-bar at top) -->
+      <div class="filter-pills" id="categoryFilters" style="display:none;">
         <button class="filter-pill active" data-category="all">
           <i class="fa-solid fa-layer-group"></i> ทั้งหมด
         </button>
@@ -363,9 +389,38 @@
   <!-- QRCode.js Library from CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- Global Config -->
-  <script src="config.js?v=3.1"></script>
+  <script src="config.js?v=3.2"></script>
   <!-- Application Logic -->
-  <script src="app.js?v=3.1"></script>
+  <script src="app.js?v=3.2"></script>
+
+  <!-- Department Nav Bar: Bridge to existing filter logic -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const deptNavBtns = document.querySelectorAll(".dept-nav-btn");
+      const categoryFilters = document.getElementById("categoryFilters");
+
+      deptNavBtns.forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          // Update active state in dept-nav-bar
+          deptNavBtns.forEach(function(b) { b.classList.remove("active"); });
+          btn.classList.add("active");
+
+          // Sync with existing hidden filter pills (triggers app.js filter logic)
+          const cat = btn.dataset.filterTop;
+          const targetPill = categoryFilters.querySelector('[data-category="' + cat + '"]');
+          if (targetPill) {
+            targetPill.click();
+          }
+
+          // Smooth scroll to main content on mobile
+          const mainContent = document.querySelector(".main-content");
+          if (mainContent && window.innerWidth < 768) {
+            mainContent.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        });
+      });
+    });
+  </script>
 
   <!-- Admin Password Gate Logic -->
   <script>
