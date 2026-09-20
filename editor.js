@@ -470,7 +470,7 @@ class EditorApp {
     if (this.previewHeaderLogo) {
       if (this.branding.headerLogoUrl && this.branding.headerLogoUrl.trim() !== "") {
         const resolvedUrl = this.convertGoogleDriveUrl(this.branding.headerLogoUrl.trim());
-        this.previewHeaderLogo.innerHTML = `<img src="${resolvedUrl}" alt="Logo" style="width:100%; height:100%; object-fit:contain; border-radius:inherit;">`;
+        this.previewHeaderLogo.innerHTML = `<img src="${resolvedUrl}" alt="Logo" referrerpolicy="no-referrer" style="width:100%; height:100%; object-fit:contain; border-radius:inherit;">`;
         this.previewHeaderLogo.style.background = "transparent";
       } else {
         this.previewHeaderLogo.innerHTML = `<i class="fa-solid fa-leaf"></i>`;
@@ -497,7 +497,7 @@ class EditorApp {
     if (this.previewFooterLogo) {
       if (this.branding.footerLogoUrl && this.branding.footerLogoUrl.trim() !== "") {
         const resolvedUrl = this.convertGoogleDriveUrl(this.branding.footerLogoUrl.trim());
-        this.previewFooterLogo.innerHTML = `<img src="${resolvedUrl}" alt="Logo" style="width:100%; height:100%; object-fit:contain; border-radius:inherit;">`;
+        this.previewFooterLogo.innerHTML = `<img src="${resolvedUrl}" alt="Logo" referrerpolicy="no-referrer" style="width:100%; height:100%; object-fit:contain; border-radius:inherit;">`;
         this.previewFooterLogo.style.background = "transparent";
       } else {
         this.previewFooterLogo.innerHTML = `<i class="fa-solid fa-leaf"></i>`;
@@ -514,23 +514,40 @@ class EditorApp {
     }
   }
 
-  saveBranding(notify = true, toastMsg = "บันทึกข้อมูลและโลโก้ส่วนหัว/ท้ายเว็บเรียบร้อยแล้ว! 🎨") {
+  async saveBranding(notify = true, toastMsg = "บันทึกข้อมูลและโลโก้ส่วนหัว/ท้ายเว็บเรียบร้อยแล้ว! 🎨") {
+    // 1. Safe localStorage cache (quota-safe)
     try {
       localStorage.setItem("kucsc_site_branding", JSON.stringify(this.branding));
-      if (notify && this.syncChannel) {
+    } catch (e) {
+      console.warn("Could not cache full branding to localStorage (quota exceeded), trying lightweight:", e);
+      try {
+        const lightweight = {
+          ...this.branding,
+          headerLogoUrl: (this.branding.headerLogoUrl && this.branding.headerLogoUrl.startsWith("http")) ? this.branding.headerLogoUrl : "",
+          footerLogoUrl: (this.branding.footerLogoUrl && this.branding.footerLogoUrl.startsWith("http")) ? this.branding.footerLogoUrl : ""
+        };
+        localStorage.setItem("kucsc_site_branding", JSON.stringify(lightweight));
+      } catch (e2) {}
+    }
+
+    // 2. Local Tab Sync via BroadcastChannel
+    if (notify && this.syncChannel) {
+      try {
         this.syncChannel.postMessage({
           type: "BRANDING_UPDATED",
           branding: this.branding,
           siteBranding: this.branding
         });
-      }
-      if (toastMsg) {
-        this.showToast(toastMsg);
-      }
-      this.saveSettingsToGAS();
-    } catch (e) {
-      console.error("Failed to save branding to localStorage", e);
+      } catch (e) {}
     }
+
+    if (toastMsg) {
+      this.showToast(toastMsg);
+    }
+
+    // 3. Always sync to Google Drive cloud storage (Cross-device)
+    const synced = await this.saveSettingsToGAS();
+    return synced;
   }
 
   initTheme() {
@@ -634,7 +651,7 @@ class EditorApp {
    */
   async saveSettingsToGAS() {
     const endpoint = this.gdriveEndpoint || (window.KUCSC_CONFIG && window.KUCSC_CONFIG.gasEndpoint);
-    if (!endpoint || endpoint.trim() === "") return;
+    if (!endpoint || endpoint.trim() === "") return false;
 
     try {
       const heroBg = localStorage.getItem("kucsc_hero_bg") || "";
@@ -651,11 +668,14 @@ class EditorApp {
       const json = await resp.json();
       if (json && (json.status === "ok" || json.status === "success")) {
         console.log("KU CSC Hub: Settings synced to Google Apps Script cloud storage");
+        return true;
       } else {
         console.warn("GAS saveSettings returned error:", json);
+        return false;
       }
     } catch (err) {
       console.warn("Could not save settings to Google Apps Script:", err);
+      return false;
     }
   }
 
@@ -781,6 +801,10 @@ class EditorApp {
         this.branding.headerTitle = e.target.value;
         this.renderBrandingPreview();
       });
+      this.headerTitleInput.addEventListener("blur", () => {
+        this.branding.headerTitle = this.headerTitleInput.value.trim() || DEFAULT_BRANDING.headerTitle;
+        this.renderBrandingPreview();
+      });
     }
 
     if (this.headerSubtitleInput) {
@@ -788,22 +812,39 @@ class EditorApp {
         this.branding.headerSubtitle = e.target.value;
         this.renderBrandingPreview();
       });
+      this.headerSubtitleInput.addEventListener("blur", () => {
+        this.branding.headerSubtitle = this.headerSubtitleInput.value.trim();
+        this.renderBrandingPreview();
+      });
     }
 
-    // Header Logo: Upload from device
+    // Header Logo: Upload from device (Auto uploads to Google Drive if configured)
     if (this.uploadHeaderLogoInput) {
-      this.uploadHeaderLogoInput.addEventListener("change", (e) => {
+      this.uploadHeaderLogoInput.addEventListener("change", async (e) => {
         const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (evt) => {
-            this.branding.headerLogoUrl = evt.target.result;
+        if (!file) return;
+
+        if (this.gdriveEndpoint) {
+          this.showToast("กำลังอัปโหลดโลโก้ส่วนหัวเข้า Google Drive... ☁️");
+          const url = await this.uploadToGoogleDrive(file, "KU CSC Branding");
+          this.uploadHeaderLogoInput.value = "";
+          if (url) {
+            this.branding.headerLogoUrl = url;
             this.renderBrandingPreview();
-            this.saveBranding(true, "เปลี่ยนโลโก้ส่วนหัวและซิงค์ Real-time สำเร็จ! 🎨");
-            this.uploadHeaderLogoInput.value = "";
-          };
-          reader.readAsDataURL(file);
+            await this.saveBranding(true, "อัปโหลดโลโก้ส่วนหัวเข้า Google Drive และซิงค์ทุกอุปกรณ์สำเร็จ! ☁️⚡");
+            return;
+          }
         }
+
+        // Fallback: Read as data URL if GDrive not available
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+          this.branding.headerLogoUrl = evt.target.result;
+          this.renderBrandingPreview();
+          await this.saveBranding(true, "เปลี่ยนโลโก้ส่วนหัวและซิงค์สำเร็จ! 🎨");
+          this.uploadHeaderLogoInput.value = "";
+        };
+        reader.readAsDataURL(file);
       });
     }
 
@@ -818,30 +859,30 @@ class EditorApp {
         if (url) {
           this.branding.headerLogoUrl = url;
           this.renderBrandingPreview();
-          this.saveBranding(true, "อัปโหลดโลโก้ส่วนหัวเข้า Google Drive และซิงค์ Real-time สำเร็จ! ☁️⚡");
+          await this.saveBranding(true, "อัปโหลดโลโก้ส่วนหัวเข้า Google Drive และซิงค์ทุกอุปกรณ์สำเร็จ! ☁️⚡");
         }
       });
     }
 
     // Header Logo: Enter image URL
     if (this.urlHeaderLogoBtn) {
-      this.urlHeaderLogoBtn.addEventListener("click", () => {
+      this.urlHeaderLogoBtn.addEventListener("click", async () => {
         const current = this.branding.headerLogoUrl || "";
         const inputUrl = prompt("กรุณาระบุ URL รูปภาพสำหรับโลโก้ส่วนหัว (Header Logo):", current);
         if (inputUrl !== null) {
           this.branding.headerLogoUrl = this.convertGoogleDriveUrl(inputUrl.trim());
           this.renderBrandingPreview();
-          this.saveBranding(true, "เปลี่ยนโลโก้ส่วนหัวและซิงค์ Real-time สำเร็จ! 🎨");
+          await this.saveBranding(true, "เปลี่ยนโลโก้ส่วนหัวและซิงค์ทุกอุปกรณ์สำเร็จ! 🎨⚡");
         }
       });
     }
 
     // Header Logo: Reset to default icon
     if (this.clearHeaderLogoBtn) {
-      this.clearHeaderLogoBtn.addEventListener("click", () => {
+      this.clearHeaderLogoBtn.addEventListener("click", async () => {
         this.branding.headerLogoUrl = "";
         this.renderBrandingPreview();
-        this.saveBranding(true, "รีเซ็ตโลโก้ส่วนหัวเป็นค่าเริ่มต้นแล้ว 🔄");
+        await this.saveBranding(true, "รีเซ็ตโลโก้ส่วนหัวเป็นค่าเริ่มต้นแล้ว 🔄");
       });
     }
 
@@ -851,6 +892,10 @@ class EditorApp {
         this.branding.footerTitle = e.target.value;
         this.renderBrandingPreview();
       });
+      this.footerTitleInput.addEventListener("blur", () => {
+        this.branding.footerTitle = this.footerTitleInput.value.trim() || DEFAULT_BRANDING.footerTitle;
+        this.renderBrandingPreview();
+      });
     }
 
     if (this.footerSubtitleInput) {
@@ -858,22 +903,38 @@ class EditorApp {
         this.branding.footerSubtitle = e.target.value;
         this.renderBrandingPreview();
       });
+      this.footerSubtitleInput.addEventListener("blur", () => {
+        this.branding.footerSubtitle = this.footerSubtitleInput.value.trim();
+        this.renderBrandingPreview();
+      });
     }
 
-    // Footer Logo: Upload from device
+    // Footer Logo: Upload from device (Auto uploads to Google Drive if configured)
     if (this.uploadFooterLogoInput) {
-      this.uploadFooterLogoInput.addEventListener("change", (e) => {
+      this.uploadFooterLogoInput.addEventListener("change", async (e) => {
         const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (evt) => {
-            this.branding.footerLogoUrl = evt.target.result;
+        if (!file) return;
+
+        if (this.gdriveEndpoint) {
+          this.showToast("กำลังอัปโหลดโลโก้ส่วนท้ายเข้า Google Drive... ☁️");
+          const url = await this.uploadToGoogleDrive(file, "KU CSC Branding");
+          this.uploadFooterLogoInput.value = "";
+          if (url) {
+            this.branding.footerLogoUrl = url;
             this.renderBrandingPreview();
-            this.saveBranding(true, "เปลี่ยนโลโก้ส่วนท้ายและซิงค์ Real-time สำเร็จ! 🎨");
-            this.uploadFooterLogoInput.value = "";
-          };
-          reader.readAsDataURL(file);
+            await this.saveBranding(true, "อัปโหลดโลโก้ส่วนท้ายเข้า Google Drive และซิงค์ทุกอุปกรณ์สำเร็จ! ☁️⚡");
+            return;
+          }
         }
+
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+          this.branding.footerLogoUrl = evt.target.result;
+          this.renderBrandingPreview();
+          await this.saveBranding(true, "เปลี่ยนโลโก้ส่วนท้ายและซิงค์สำเร็จ! 🎨");
+          this.uploadFooterLogoInput.value = "";
+        };
+        reader.readAsDataURL(file);
       });
     }
 
@@ -888,42 +949,57 @@ class EditorApp {
         if (url) {
           this.branding.footerLogoUrl = url;
           this.renderBrandingPreview();
-          this.saveBranding(true, "อัปโหลดโลโก้ส่วนท้ายเข้า Google Drive และซิงค์ Real-time สำเร็จ! ☁️⚡");
+          await this.saveBranding(true, "อัปโหลดโลโก้ส่วนท้ายเข้า Google Drive และซิงค์ทุกอุปกรณ์สำเร็จ! ☁️⚡");
         }
       });
     }
 
     // Footer Logo: Enter image URL
     if (this.urlFooterLogoBtn) {
-      this.urlFooterLogoBtn.addEventListener("click", () => {
+      this.urlFooterLogoBtn.addEventListener("click", async () => {
         const current = this.branding.footerLogoUrl || "";
         const inputUrl = prompt("กรุณาระบุ URL รูปภาพสำหรับโลโก้ส่วนท้าย (Footer Logo):", current);
         if (inputUrl !== null) {
           this.branding.footerLogoUrl = this.convertGoogleDriveUrl(inputUrl.trim());
           this.renderBrandingPreview();
-          this.saveBranding(true, "เปลี่ยนโลโก้ส่วนท้ายและซิงค์ Real-time สำเร็จ! 🎨");
+          await this.saveBranding(true, "เปลี่ยนโลโก้ส่วนท้ายและซิงค์ทุกอุปกรณ์สำเร็จ! 🎨⚡");
         }
       });
     }
 
     // Footer Logo: Reset to default icon
     if (this.clearFooterLogoBtn) {
-      this.clearFooterLogoBtn.addEventListener("click", () => {
+      this.clearFooterLogoBtn.addEventListener("click", async () => {
         this.branding.footerLogoUrl = "";
         this.renderBrandingPreview();
-        this.saveBranding(true, "รีเซ็ตโลโก้ส่วนท้ายเป็นค่าเริ่มต้นแล้ว 🔄");
+        await this.saveBranding(true, "รีเซ็ตโลโก้ส่วนท้ายเป็นค่าเริ่มต้นแล้ว 🔄");
       });
     }
 
     // Save & Reset Branding Buttons
     if (this.saveBrandingBtn) {
-      this.saveBrandingBtn.addEventListener("click", () => {
+      this.saveBrandingBtn.addEventListener("click", async () => {
         this.branding.headerTitle = (this.headerTitleInput ? this.headerTitleInput.value : "").trim() || DEFAULT_BRANDING.headerTitle;
         this.branding.headerSubtitle = (this.headerSubtitleInput ? this.headerSubtitleInput.value : "").trim();
         this.branding.footerTitle = (this.footerTitleInput ? this.footerTitleInput.value : "").trim() || DEFAULT_BRANDING.footerTitle;
         this.branding.footerSubtitle = (this.footerSubtitleInput ? this.footerSubtitleInput.value : "").trim();
         this.renderBrandingPreview();
-        this.saveBranding(true, "บันทึกข้อมูลและโลโก้ส่วนหัว/ท้ายเว็บเรียบร้อยแล้ว! 🎨⚡");
+
+        const originalHtml = this.saveBrandingBtn.innerHTML;
+        this.saveBrandingBtn.disabled = true;
+        this.saveBrandingBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>กำลังบันทึก...</span>`;
+
+        try {
+          const success = await this.saveBranding(true, "");
+          if (success) {
+            this.showToast("บันทึกข้อมูลแบรนด์และซิงค์ไปยัง Google Drive เรียบร้อยแล้ว! ☁️⚡");
+          } else {
+            this.showToast("บันทึกข้อมูลแบรนด์ลงเครื่องเรียบร้อยแล้ว (ไม่สามารถซิงค์ Cloud ได้) ⚠️");
+          }
+        } finally {
+          this.saveBrandingBtn.disabled = false;
+          this.saveBrandingBtn.innerHTML = originalHtml;
+        }
       });
     }
 
