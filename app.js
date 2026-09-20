@@ -298,7 +298,7 @@ class PortalApp {
     if (headerLogoWrap) {
       if (branding.headerLogoUrl && branding.headerLogoUrl.trim() !== "") {
         const resolvedUrl = this.convertGoogleDriveUrl(branding.headerLogoUrl.trim());
-        headerLogoWrap.innerHTML = `<img src="${resolvedUrl}" alt="Logo" style="width:100%; height:100%; object-fit:contain; border-radius:inherit;">`;
+        headerLogoWrap.innerHTML = `<img src="${resolvedUrl}" alt="Logo" referrerpolicy="no-referrer" style="width:100%; height:100%; object-fit:contain; border-radius:inherit;" onerror="this.parentElement.innerHTML='<i class=\\'fa-solid fa-leaf brand-icon\\'></i>'">`;
         headerLogoWrap.style.background = "transparent";
       } else {
         headerLogoWrap.innerHTML = `<i class="fa-solid fa-leaf brand-icon"></i>`;
@@ -323,7 +323,7 @@ class PortalApp {
     if (footerLogoWrap) {
       if (branding.footerLogoUrl && branding.footerLogoUrl.trim() !== "") {
         const resolvedUrl = this.convertGoogleDriveUrl(branding.footerLogoUrl.trim());
-        footerLogoWrap.innerHTML = `<img src="${resolvedUrl}" alt="Logo" style="width:100%; height:100%; object-fit:contain; border-radius:inherit;">`;
+        footerLogoWrap.innerHTML = `<img src="${resolvedUrl}" alt="Logo" referrerpolicy="no-referrer" style="width:100%; height:100%; object-fit:contain; border-radius:inherit;" onerror="this.parentElement.innerHTML='<i class=\\'fa-solid fa-leaf\\'></i>'">`;
         footerLogoWrap.style.background = "transparent";
       } else {
         footerLogoWrap.innerHTML = `<i class="fa-solid fa-leaf"></i>`;
@@ -423,27 +423,58 @@ class PortalApp {
     if (!endpoint || endpoint.trim() === "") return;
 
     try {
-      const resp = await fetch(`${endpoint.trim()}?action=getSettings`);
+      const sep = endpoint.includes("?") ? "&" : "?";
+      const resp = await fetch(`${endpoint.trim()}${sep}action=getSettings&_t=${Date.now()}`);
       const data = await resp.json();
       if (data && data.status === "ok") {
         let hasChanges = false;
-        if (data.heroBg !== undefined && data.heroBg !== null) {
-          localStorage.setItem("kucsc_hero_bg", data.heroBg);
+
+        // 1. Apply Branding First (Header/Footer Logos and Titles)
+        if (data.siteBranding && typeof data.siteBranding === "object") {
+          this.applyBranding(data.siteBranding);
+          hasChanges = true;
+          try {
+            localStorage.setItem("kucsc_site_branding", JSON.stringify(data.siteBranding));
+          } catch (e) {
+            console.warn("Could not cache siteBranding to localStorage:", e);
+          }
+        }
+
+        // 2. Apply Hero Background
+        if (data.heroBg !== undefined && data.heroBg !== null && data.heroBg !== "") {
           this.applyHeroBg(data.heroBg);
           hasChanges = true;
+          try {
+            localStorage.setItem("kucsc_hero_bg", data.heroBg);
+          } catch (e) {
+            console.warn("Could not cache heroBg to localStorage:", e);
+          }
         }
+
+        // 3. Apply and Render Departments in-memory first
         if (Array.isArray(data.departments) && data.departments.length > 0) {
           this.departments = data.departments;
-          localStorage.setItem("kucsc_directory_data", JSON.stringify(this.departments));
           this.updateStats();
           this.render();
           hasChanges = true;
+
+          // Attempt localStorage cache safely (avoid quota crashes on mobile)
+          try {
+            localStorage.setItem("kucsc_directory_data", JSON.stringify(this.departments));
+          } catch (storageErr) {
+            console.warn("LocalStorage quota exceeded when caching departments (rendered in-memory successfully):", storageErr);
+            // Lightweight cache fallback without large base64 data
+            try {
+              const lightweight = this.departments.map(d => ({
+                ...d,
+                bannerUrl: (d.bannerUrl && d.bannerUrl.startsWith("http")) ? d.bannerUrl : "",
+                logoUrl: (d.logoUrl && d.logoUrl.startsWith("http")) ? d.logoUrl : ""
+              }));
+              localStorage.setItem("kucsc_directory_data", JSON.stringify(lightweight));
+            } catch (e2) {}
+          }
         }
-        if (data.siteBranding) {
-          localStorage.setItem("kucsc_site_branding", JSON.stringify(data.siteBranding));
-          this.applyBranding(data.siteBranding);
-          hasChanges = true;
-        }
+
         if (hasChanges) {
           console.log("KU CSC Hub: Synced latest cloud data from Google Drive");
         }
